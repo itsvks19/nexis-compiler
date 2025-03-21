@@ -21,3 +21,5 @@ module Main {
     }
 }
 ```
+
+See [example.nx](example.nx)
