@@ -4,9 +4,12 @@
 #include "module_manager.h"
 #include "symbol_table.h"
 #include "evaluator.h"
+
 #include <iostream>
 #include <vector>
 #include <string>
+#include <fstream>
+#include <sstream>
 
 void traverse(ASTNode *node, bool registerOnly = true)
 {
@@ -111,66 +114,50 @@ void registerStandardModules() {
     });
 }
 
-int main()
+std::string readFile(const std::string& filepath) {
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        throw std::runtime_error("Could not open file: " + filepath);
+    }
+    
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.str();
+}
+
+int main(int argc, char* argv[])
 {
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " <source-file.nx>" << std::endl;
+        return 1;
+    }
+
     registerStandardModules();
 
-    std::string sourceCode = R"(
-module Math {
-    import std.io;
+    try {
+        std::string sourceCode = readFile(argv[1]);
+        
+        Lexer lexer(sourceCode);
+        Parser parser(lexer, sourceCode);
 
-    func square(x: int) -> int {
-        return x * x;
-    }
-
-    func hello() -> int {
-        io.println("Hello from Math module!");
-        return 0;
-    }
-}
-
-module Main {
-    import Math;
-    import std.io;
-
-    func main() -> int {
-        let num = 8;
-        let sq = Math.square(num);
-
-        let hh: boolean = true;
-        let hh2 = false;
-
-        if (hh2) {
-            io.println("True");
-        } else {
-            io.println("False");
+        auto ast = parser.parse();
+        if (!ast) {
+            std::cerr << "Failed to parse program" << std::endl;
+            return 1;
         }
 
-        Math.hello();
-        io.print("Square is: " + sq);
-        return 0;
-    }
-}
-)";
+        traverse(ast.get());
 
-    Lexer lexer(sourceCode);
-    Parser parser(lexer, sourceCode);
+        auto& mm = ModuleManager::getInstance();
+        if (mm.hasFunction("Main.main")) {
+            mm.callFunction("Main.main", {});
+        } else {
+            std::cerr << "Error: Main function not found" << std::endl;
+            return 1;
+        }
 
-    auto ast = parser.parse();
-    if (!ast) {
-        std::cerr << "Failed to parse program" << std::endl;
-        return 1;
-    } else {
-        // std::cout << "Program parsed successfully" << std::endl;
-    }
-
-    traverse(ast.get());
-
-    auto& mm = ModuleManager::getInstance();
-    if (mm.hasFunction("Main.main")) {
-        mm.callFunction("Main.main", {});
-    } else {
-        std::cerr << "Error: Main function not found" << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
         return 1;
     }
 

@@ -1,0 +1,38 @@
+module Math {
+    import std.io;
+
+    func square(x: int) -> int {
+        return x * x;
+    }
+}
+
+module Main {
+    import Math;
+    import std.io;
+    import std.math;
+
+    func main() -> int {
+        let number = 5;
+        let squared = Math.square(number);
+        
+        io.print("Number: " + number);
+        io.println("Square: " + squared);
+
+        let a = 10;
+        let b = 5;
+        let sum = math.add(a, b);
+        let diff = math.subtract(a, b);
+
+        io.println("Sum of " + a + " and " + b + " is: " + sum);
+        io.println("Difference of " + a + " and " + b + " is: " + diff);
+
+        let isTrue = true;
+        if (isTrue) {
+            io.println("Condition is true!");
+        } else {
+            io.println("Condition is false!");
+        }
+
+        return 0;
+    }
+}

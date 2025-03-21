@@ -3,4 +3,4 @@
 cd build
 cmake ..
 make
-./nexis_compiler
+./nexis_compiler ../example.nx

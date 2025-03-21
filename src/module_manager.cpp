@@ -114,26 +114,34 @@ std::string ModuleManager::callFunction(const std::string& qualifiedName, const 
     }
 
     // Then try user-defined functions
-    if (auto userFunc = getUserDefinedFunction(qualifiedName)) {
-        if (auto funcNode = dynamic_cast<FunctionNode*>(userFunc.get())) {
-            // Create new symbol scope
+    auto userModuleIt = userDefinedFunctions.find(moduleName);
+    if (userModuleIt != userDefinedFunctions.end()) {
+        auto funcIt = userModuleIt->second.find(functionName);
+        if (funcIt != userModuleIt->second.end()) {
+            const UserFunction& func = funcIt->second;
+            
+            // Create new symbol scope for function call
             SymbolTable::getInstance().pushScope();
             
-            // Bind arguments
-            for (size_t i = 0; i < funcNode->parameters.size(); i++) {
-                if (i < args.size()) {
-                    std::string argValue = evaluateNode(args[i].get());
-                    SymbolTable::getInstance().setValue(funcNode->parameters[i].name, argValue);
-                }
+            // Bind arguments to parameters
+            for (size_t i = 0; i < func.parameters.size() && i < args.size(); i++) {
+                std::string argValue = evaluateNode(args[i].get());
+                SymbolTable::getInstance().setValue(func.parameters[i].name, argValue);
             }
             
             // Execute function body
             std::string result;
-            for (const auto& stmt : funcNode->body) {
+            for (const auto& stmt : dynamic_cast<FunctionNode*>(func.body.get())->body) {
                 result = evaluateNode(stmt.get());
+                // If this is a return statement, break out
+                if (!SymbolTable::getInstance().getValue("_lastResult").empty()) {
+                    result = SymbolTable::getInstance().getValue("_lastResult");
+                    SymbolTable::getInstance().setValue("_lastResult", "");
+                    break;
+                }
             }
             
-            // Restore scope
+            // Restore previous scope
             SymbolTable::getInstance().popScope();
             return result;
         }

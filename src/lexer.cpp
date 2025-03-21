@@ -52,6 +52,11 @@ Token Lexer::getNextToken()
         case '*':
         case '/':
         case '=':
+            if (current_ + 1 < source_.length() && source_[current_ + 1] == '=') {
+                current_ += 2;
+                column_ += 2;
+                return {OPERATOR, "==", line_};
+            }
             current_++;
             column_++;
             return {OPERATOR, std::string(1, c), line_};
@@ -100,6 +105,26 @@ Token Lexer::getNextToken()
             current_++;
             column_++;
             return {COLON, ":", line_};
+        case '<':
+            if (current_ + 1 < source_.length() && source_[current_ + 1] == '=') {
+                current_ += 2;
+                column_ += 2;
+                return {OPERATOR, "<=", line_};
+            } else {
+                current_++;
+                column_++;
+                return {OPERATOR, "<", line_};
+            }
+        case '>':
+            if (current_ + 1 < source_.length() && source_[current_ + 1] == '=') {
+                current_ += 2;
+                column_ += 2;
+                return {OPERATOR, ">=", line_};
+            } else {
+                current_++;
+                column_++;
+                return {OPERATOR, ">", line_};
+            }
         default:
             std::cerr << "Lexical error at line " << line_ << ": Unexpected character '" << c << "'" << std::endl;
             return {END_OF_FILE, "", line_};
