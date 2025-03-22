@@ -15,7 +15,7 @@ Nexis is a modern, modular programming language designed for clarity and simplic
 
 ```nexis
 module Main {
-    function main() {
+    func main() {
         let message: string = "Hello, World!";
         print(message);
     }
